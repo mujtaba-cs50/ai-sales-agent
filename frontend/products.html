@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Sales Agent | Solar Products</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container-wide navbar">
+      <a class="brand" href="index.html"><span class="brand-mark"><img src="assets/logo-icon.png" alt="AI Sales Agent logo" /></span><span class="brand-copy"><span class="brand-title">AI Sales Agent</span><span class="brand-tagline"></span></span></a>
+      <nav class="nav-links" data-nav-links aria-label="Main navigation"><a href="index.html">Home</a><a href="assistant.html">Voice Assistant</a><a class="active" href="products.html">Products</a><a href="dashboard.html">Dashboard</a></nav>
+      <div class="nav-actions" data-nav-actions><a class="btn btn-ghost" href="login.html">Login</a><a class="btn btn-primary" href="signup.html">Sign Up</a></div>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="section-tight">
+      <div class="container products-layout">
+        <aside class="filter-panel">
+          <h2>Filter packages</h2>
+          <div class="field"><label for="productFilter">Package type</label><select class="select" id="productFilter" data-product-filter><option>All</option><option>Residential</option><option>Commercial</option><option>Backup</option></select></div>
+        </aside>
+
+        <div class="product-grid">
+          <article class="product-card" data-product-card="Residential"><div class="product-icon">☀️</div><div class="badges"><span class="badge">Residential</span><span class="badge amber">Entry</span></div><h3>3kW Home Solar</h3><p>Designed for smaller homes with essential daytime usage and basic appliances.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Small homes</strong></div><div class="meta-row"><span>Price</span><strong>PKR 750k - 900k</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+
+          <article class="product-card" data-product-card="Residential"><div class="product-icon">⚡</div><div class="badges"><span class="badge">Residential</span><span class="badge amber">Popular</span></div><h3>5kW Hybrid System</h3><p>A balanced package for medium homes that need strong daily savings and backup support.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Medium homes</strong></div><div class="meta-row"><span>Price</span><strong>PKR 1.2M - 1.45M</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+
+          <article class="product-card" data-product-card="Residential"><div class="product-icon">🏠</div><div class="badges"><span class="badge">Residential</span></div><h3>7kW Premium Home</h3><p>For larger homes with higher electricity usage and multiple heavy appliances.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Large homes</strong></div><div class="meta-row"><span>Price</span><strong>PKR 1.7M - 2.0M</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+
+          <article class="product-card" data-product-card="Commercial"><div class="product-icon">🏢</div><div class="badges"><span class="badge">Commercial</span></div><h3>10kW Business Solar</h3><p>A professional package for shops, offices, and small commercial spaces.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Offices</strong></div><div class="meta-row"><span>Price</span><strong>PKR 2.4M - 2.8M</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+
+          <article class="product-card" data-product-card="Commercial"><div class="product-icon">🏭</div><div class="badges"><span class="badge">Commercial</span><span class="badge amber">Scale</span></div><h3>20kW Commercial System</h3><p>For businesses that want larger savings, higher capacity, and a custom installation plan.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Warehouses</strong></div><div class="meta-row"><span>Price</span><strong>PKR 4.6M - 5.2M</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+
+          <article class="product-card" data-product-card="Backup"><div class="product-icon">🔋</div><div class="badges"><span class="badge">Backup</span></div><h3>Battery and Inverter</h3><p>Backup-focused solution for night usage and power outage protection.</p><div class="product-meta"><div class="meta-row"><span>Best for</span><strong>Backup power</strong></div><div class="meta-row"><span>Price</span><strong>PKR 350k - 600k</strong></div></div><a class="btn btn-soft" href="assistant.html">Talk to Agent</a></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="container footer-bottom"><span>© 2026 AI Sales Agent.</span></div></footer>
+  <script src="js/app.js"></script>
+</body>
+</html>
