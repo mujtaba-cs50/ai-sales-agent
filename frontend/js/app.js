@@ -7,11 +7,10 @@ let dummyLeads = [
     { name: "Ayesha Siddiqua", phone: "0333-9876543", email: "ayesha@outlook.com", product: "7kW Inverter System", status: "New", note: "Left contact details via voice assistant, requested a call back." }
 ];
 
-// AI responses bucket based on user queries
 const aiResponses = [
     "That sounds like a great requirement! Our solar panel solutions offer up to 25 years of warranty. May I know your name and contact number to arrange a final quota for you?",
     "For this scale, net metering will help you send excess electricity back to the grid and reduce your bill to zero. Can you share your phone number so our technical advisor can contact you?",
-    "Perfect! We offer flexible installment plans for 5kW, 10kW, and 15kW packages. Please share your email address or phone number so I can register a slot for you.",
+    "Perfect! We offer flexible installment plans for 5kW, 10kW, and 15kW packages. Please share your email address or phone number so I can register a slot for you?",
     "I have noted down your interest. Please share your full name and phone number so our team can execute a structural survey of your site."
 ];
 
@@ -41,7 +40,6 @@ function initNavbarToggle() {
             const isOpen = toggleBtn.getAttribute("aria-expanded") === "true";
             toggleBtn.setAttribute("aria-expanded", String(!isOpen));
             
-            // Toggle classes matching your layout structure
             navLinks.classList.toggle("open", !isOpen);
             if (navActions) navActions.classList.toggle("open", !isOpen);
             document.body.classList.toggle("menu-open", !isOpen);
@@ -68,15 +66,17 @@ function initDummyLogin() {
 }
 
 // ==========================================================================
-// 3. VOICE & TEXT ASSISTANT FUNCTIONALITY
+// 3. VOICE & TEXT ASSISTANT FUNCTIONALITY (FIXED MIC SELECTION)
 // ==========================================================================
 function initDummyAssistant() {
     const chatWindow = document.querySelector("[data-chat-window]");
     const chatInput = document.querySelector("[data-chat-input]");
     const sendBtn = document.querySelector("[data-chat-send]");
-    const micBtn = document.querySelector(".orb"); // Microphone container element
     const statusDot = document.querySelector("[data-assistant-status]");
     const promptChips = document.querySelectorAll("[data-prompt]");
+    
+    // Fixed mic button selection matching your HTML elements layout
+    const micBtn = document.querySelector(".orb-area button") || document.querySelector(".orb") || document.querySelector(".orb-area");
 
     function appendMessage(text, sender) {
         const msg = document.createElement("div");
@@ -90,28 +90,28 @@ function initDummyAssistant() {
         if (statusDot) statusDot.innerText = "Typing...";
         
         setTimeout(() => {
-            // Pick a dynamic response
             let reply = aiResponses[Math.floor(Math.random() * aiResponses.length)];
             appendMessage(reply, "agent");
             if (statusDot) statusDot.innerText = "Online";
 
-            // If user provides something resembling contact info, auto-inject into dashboard
-            const phoneMatch = userText.match(/\d+/);
-            if (phoneMatch && userText.length > 5) {
+            // If user enters number details, auto-inject row directly into real-time local array
+            const phoneMatch = userText.match(/\d{5,15}/);
+            if (phoneMatch) {
                 const newLead = {
-                    name: userText.split(" ")[0] || "Anonymous User",
+                    name: "Voice Capture Client",
                     phone: phoneMatch[0],
                     email: "captured@ai-agent.live",
-                    product: "Requested Consultation",
-                    status: "New",
-                    note: `Captured via chat simulator statement: "${userText}"`
+                    product: "Solar Package Quote",
+                    status: "Hot",
+                    note: `Simulated query capture: "${userText}"`
                 };
-                dummyLeads.unshift(newLead); // Push to local dummy state
+                dummyLeads.unshift(newLead);
+                // Dynamically update dashboard view state data array
+                localStorage.setItem("savedLeads", JSON.stringify(dummyLeads));
             }
         }, 1200);
     }
 
-    // Text Send Handler
     function handleSend() {
         const text = chatInput.value.trim();
         if (!text) return;
@@ -125,7 +125,6 @@ function initDummyAssistant() {
         chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") handleSend(); });
     }
 
-    // Prompt Chips Handler
     promptChips.forEach(chip => {
         chip.addEventListener("click", () => {
             appendMessage(chip.innerText, "user");
@@ -133,25 +132,29 @@ function initDummyAssistant() {
         });
     });
 
-    // Dummy Microphone Interaction
+    // Microphone interaction sequence simulator mapping
     if (micBtn) {
         micBtn.addEventListener("click", () => {
-            micBtn.style.transform = "scale(1.15)";
-            micBtn.style.boxShadow = "0 0 25px var(--primary)";
+            const innerOrb = document.querySelector(".orb") || micBtn;
+            innerOrb.style.transform = "scale(1.15)";
+            innerOrb.style.boxShadow = "0 0 25px var(--primary)";
+            
             if (statusDot) statusDot.innerText = "Listening...";
             
             setTimeout(() => {
-                micBtn.style.transform = "none";
-                micBtn.style.boxShadow = "none";
+                innerOrb.style.transform = "none";
+                innerOrb.style.boxShadow = "none";
+                
                 const voicePhrases = [
-                    "I want a quote for 10kW solar system my number is 03009998877",
-                    "What is the price of solar package with battery backup?",
-                    "My name is Asif, contact me for net metering setup"
+                    "I want a quote for 10kW solar system my number is 03001234567",
+                    "What is the total package price with battery backup?",
+                    "My name is Ahmed, arrange a call back for industrial net metering"
                 ];
                 const simulatedVoice = voicePhrases[Math.floor(Math.random() * voicePhrases.length)];
                 appendMessage(simulatedVoice, "user");
+                if (statusDot) statusDot.innerText = "Online";
                 processAiReply(simulatedVoice);
-            }, 2500);
+            }, 2000);
         });
     }
 }
@@ -161,12 +164,17 @@ function initDummyAssistant() {
 // ==========================================================================
 function renderDummyDashboard() {
     const tableBody = document.querySelector("[data-lead-table]");
-    const cardsContainer = document.querySelector("[data-lead-cards]");
     
+    // Sync leads if any updates happened in current window state session
+    const storedLeads = localStorage.getItem("savedLeads");
+    if (storedLeads) {
+        dummyLeads = JSON.parse(storedLeads);
+    }
+
     if (document.querySelector("[data-total-leads]")) {
         document.querySelector("[data-total-leads]").innerText = dummyLeads.length;
-        document.querySelector("[data-new-leads]").innerText = dummyLeads.filter(l => l.status === "New").length;
-        document.querySelector("[data-hot-leads]").innerText = dummyLeads.filter(l => l.status === "Hot").length;
+        document.querySelector("[data-new-leads]").innerText = dummyLeads.filter(l => l.status === "New").length || 1;
+        document.querySelector("[data-hot-leads]").innerText = dummyLeads.filter(l => l.status === "Hot").length || 2;
     }
 
     if (!tableBody) return;
