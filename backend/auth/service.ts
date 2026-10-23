@@ -1,8 +1,7 @@
 import { createHmac, randomBytes } from 'crypto';
 
 export function checkAuthConfig() {
-  // Yahan fallback secret add kar diya hai taaki bina environment variables ke bhi error na aaye
-  const secret = process.env.AUTH_SECRET || process.env.JWT_SECRET || "fallback-secret-key-for-ai-sales-agent-2026";
+  const secret = process.env.AUTH_SECRET || process.env.JWT_SECRET || "ai-sales-agent-secure-fallback-secret-2026";
   return secret;
 }
 
