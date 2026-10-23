@@ -150,7 +150,13 @@ export async function authRoute(action: string, req: HttpReq): Promise<HttpRes> 
     }
 
     let session;
-    if (action === 'signup') session = await auth.signup(body);
+    if (action === 'signup') {
+      // Map businessName to name if name is missing from frontend request
+      if (body.businessName && !body.name) {
+        body.name = body.businessName;
+      }
+      session = await auth.signup(body);
+    }
     else if (action === 'login') session = await auth.login(body, req.ip);
     else {
       try {
