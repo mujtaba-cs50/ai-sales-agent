@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": ".vercel-sim",
+    "rootDir": ".",
+    "types": ["node"],
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["api/**/*.ts", "backend/**/*.ts", "src/data/products.ts", "src/types/index.ts", "eval/fake-redis.ts"]
+}
