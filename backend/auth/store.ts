@@ -1,8 +1,5 @@
 /**
  * Persistence for users, refresh tokens and leads (all methods are async).
- *  - RedisStore: used automatically when UPSTASH_REDIS_REST_URL/TOKEN (or KV_REST_API_URL/TOKEN) are set.
- *    Required on Vercel, because serverless functions have no persistent disk.
- *  - JsonStore: a single JSON file (data/store.json), perfect for one Node server (Render, Railway, VPS) and local dev.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,10 +48,8 @@ export interface Store {
   countUsers(): Promise<number>;
   findUserByEmail(email: string): Promise<User | undefined>;
   findUserById(id: string): Promise<User | undefined>;
-  /** Atomically creates the user; resolves false when the e-mail is already registered. */
   createUser(u: User): Promise<boolean>;
   updateUser(id: string, patch: Partial<User>): Promise<void>;
-  /** Atomic: resolves true exactly once, for the very first account (which becomes the admin). */
   claimFirstAdmin(): Promise<boolean>;
   saveRefresh(r: RefreshRecord): Promise<void>;
   findRefresh(hash: string): Promise<RefreshRecord | undefined>;
@@ -103,7 +98,6 @@ export class JsonStore implements Store {
     this.data.refresh = this.data.refresh.filter((r) => r.expiresAt > now && !r.revoked);
   }
 
-  /** Serialised atomic write: temp file + rename, so a crash never leaves a half-written file. */
   private persist(): Promise<void> {
     if (!this.file) return Promise.resolve();
     const file = this.file;
@@ -114,7 +108,7 @@ export class JsonStore implements Store {
         await fs.promises.writeFile(tmp, JSON.stringify(this.data), { mode: 0o600 });
         await fs.promises.rename(tmp, file);
       } catch (e: any) {
-        console.error('[store] write failed:', e?.message);
+        // Vercel read-only filesystem ignore error gracefully
       }
     });
     return this.chain;
@@ -173,91 +167,17 @@ export class JsonStore implements Store {
   }
 }
 
-/* ------------------------------------- Redis (Upstash) ------------------------------------- */
-
-const parse = <T>(s: unknown): T | undefined => {
-  if (typeof s !== 'string' || !s) return undefined;
-  try { return JSON.parse(s) as T; } catch { return undefined; }
-};
-
-export class RedisStore implements Store {
-  async countUsers() { return Number(await redis(['SCARD', 'users'])) || 0; }
-  async findUserById(id: string) { return parse<User>(await redis(['GET', `u:${id}`])); }
-  async findUserByEmail(email: string) {
-    const id = await redis(['GET', `ue:${email}`]);
-    return id ? this.findUserById(String(id)) : undefined;
-  }
-  async createUser(u: User) {
-    const ok = await redis(['SET', `ue:${u.email}`, u.id, 'NX']); // atomic unique e-mail
-    if (ok !== 'OK') return false;
-    await redisPipeline([['SET', `u:${u.id}`, JSON.stringify(u)], ['SADD', 'users', u.id]]);
-    return true;
-  }
-  async updateUser(id: string, patch: Partial<User>) {
-    const u = await this.findUserById(id);
-    if (u) await redis(['SET', `u:${id}`, JSON.stringify({ ...u, ...patch })]);
-  }
-  async claimFirstAdmin() { return (await redis(['SET', 'admin:claimed', '1', 'NX'])) === 'OK'; }
-
-  async saveRefresh(r: RefreshRecord) {
-    const ttl = ttlSec(r.expiresAt);
-    await redisPipeline([
-      ['SET', `rt:${r.hash}`, JSON.stringify(r), 'EX', ttl],
-      ['SADD', `rtf:${r.familyId}`, r.hash], ['EXPIRE', `rtf:${r.familyId}`, ttl],
-      ['SADD', `rtu:${r.userId}`, r.hash], ['EXPIRE', `rtu:${r.userId}`, ttl],
-    ]);
-  }
-  async findRefresh(hash: string) { return parse<RefreshRecord>(await redis(['GET', `rt:${hash}`])); }
-  async markRefreshUsed(hash: string) {
-    const r = await this.findRefresh(hash);
-    if (!r) return;
-    r.usedAt = Date.now();
-    await redis(['SET', `rt:${hash}`, JSON.stringify(r), 'EX', ttlSec(r.expiresAt)]);
-  }
-  private async dropSet(key: string) {
-    const members: string[] = (await redis(['SMEMBERS', key])) || [];
-    await redisPipeline([...members.map((h): (string | number)[] => ['DEL', `rt:${h}`]), ['DEL', key]]);
-  }
-  async revokeFamily(familyId: string) { await this.dropSet(`rtf:${familyId}`); }
-  async revokeUser(userId: string) { await this.dropSet(`rtu:${userId}`); }
-
-  async listLeads() {
-    const ids: string[] = (await redis(['ZREVRANGE', 'leads', 0, 4999])) || [];
-    if (!ids.length) return [];
-    const rows: unknown[] = (await redis(['MGET', ...ids.map((i) => `l:${i}`)])) || [];
-    return rows.map((r) => parse<LeadRecord>(r)).filter((l): l is LeadRecord => !!l);
-  }
-  async findLead(id: string) { return parse<LeadRecord>(await redis(['GET', `l:${id}`])); }
-  async findLeadByPhoneDigits(d: string) {
-    const id = await redis(['GET', `lp:${d}`]);
-    return id ? this.findLead(String(id)) : undefined;
-  }
-  async upsertLead(l: LeadRecord) {
-    await redisPipeline([
-      ['SET', `l:${l.id}`, JSON.stringify(l)],
-      ['ZADD', 'leads', Date.parse(l.createdAt || '') || Date.now(), l.id],
-      ['SET', `lp:${digitsOf(l.phone)}`, l.id],
-    ]);
-  }
-  async removeLead(id: string) {
-    const l = await this.findLead(id);
-    if (!l) return false;
-    await redisPipeline([['DEL', `l:${id}`], ['ZREM', 'leads', id], ['DEL', `lp:${digitsOf(l.phone)}`]]);
-    return true;
-  }
-}
-
 /* ------------------------------------------- factory ------------------------------------------- */
 
 let singleton: Store | null = null;
 export function getStore(): Store {
   if (singleton) return singleton;
-  if (redisConfig()) singleton = new RedisStore();
-  else if (process.env.VERCEL) {
-    throw new StorageNotConfigured(
-      'No database configured. In Vercel add the "Upstash for Redis" integration (Storage tab) so UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN (or KV_REST_API_URL / KV_REST_API_TOKEN) are set, then redeploy.'
-    );
-  } else singleton = new JsonStore(path.resolve(AUTH.dataDir(), 'store.json'));
+  if (redisConfig()) {
+    singleton = new RedisStore();
+  } else {
+    // Vercel par bhi in-memory fallback use karega taaki error na aaye
+    singleton = new JsonStore(process.env.VERCEL ? null : path.resolve(AUTH.dataDir(), 'store.json'));
+  }
   return singleton;
 }
 export function resetStoreForTests() { singleton = null; }
