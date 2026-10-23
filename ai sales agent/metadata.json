@@ -1,0 +1,10 @@
+{
+  "name": "AI Sales Agent",
+  "description": "AI-powered voice and text sales assistant for solar energy businesses with real-time lead qualification, product recommendations, and CRM dashboard.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
